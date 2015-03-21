@@ -39,7 +39,7 @@
 - name: Upload the image
   os_image:
     cloud: "{{ item.0.name }}"
-    region: "{{ item.1 }}"
+    region_name: "{{ item.1 }}"
     name: "{{ prefix }}-{{ imagename }}"
     wait: yes
     timeout: 3600
