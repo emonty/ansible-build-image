@@ -25,7 +25,7 @@
   when: image_create.changed or not st.stat.exists
   args:
     creates: "{{ image_tmpdir}}/{{ imagename }}-intermediate.vhd"
-- shell: docker run -v {{ image_tmpdir }}:/images -v {{ image_ourdir }}:/output emonty/vhd-util convert -s 1 -t 2 -i /images/{{ imagename }}-intermediate.vhd -o /output/{{ imagename }}.vhd
+- shell: docker run -v {{ image_tmpdir }}:/images -v {{ image_outdir }}:/output emonty/vhd-util convert -s 1 -t 2 -i /images/{{ imagename }}-intermediate.vhd -o /output/{{ imagename }}.vhd
   when: image_create.changed or not st.stat.exists
   args:
     creates: "{{ image_outdir }}/{{ imagename }}.vhd"
