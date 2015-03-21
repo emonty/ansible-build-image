@@ -12,19 +12,30 @@
     QEMU_IMG_OPTIONS: "{{ qemu_image_options|default(omit) }}"
     DIB_RELEASE: "{{ release }}"
   register: image_create
+- name: Look for VHD file
+  stat:
+    path: "{{ image_outdir }}/{{ imagename }}.vhd"
+  register: st
 - command: qemu-img convert -O raw {{ image_outdir }}/{{ imagename }}.qcow2 {{ imagename }}.raw
-  when: image_create.changed
+  when: image_create.changed or not st.stat.exists
   args:
     chdir: "{{ image_tmpdir }}"
     creates: "{{ image_tmpdir }}/{{ imagename }}.raw"
 - shell: docker run -v {{ image_tmpdir}}:/images emonty/vhd-util convert -s 0 -t 1 -i /images/{{ imagename }}.raw -o /images/{{ imagename }}-intermediate.vhd
-  when: image_create.changed
+  when: image_create.changed or not st.stat.exists
   args:
     creates: "{{ image_tmpdir}}/{{ imagename }}-intermediate.vhd"
 - shell: docker run -v {{ image_tmpdir }}:/images -v {{ image_ourdir }}:/output emonty/vhd-util convert -s 1 -t 2 -i /images/{{ imagename }}-intermediate.vhd -o /output/{{ imagename }}.vhd
-  when: image_create.changed
+  when: image_create.changed or not st.stat.exists
   args:
     creates: "{{ image_outdir }}/{{ imagename }}.vhd"
+- stat:
+    path: "{{ image_tmpdir}}/{{ imagename }}-intermediate.vhd.bak"
+  register: cleanst
+- file:
+    state: absent
+    path: "{{ image_tmpdir}}/{{ imagename }}-intermediate.vhd.bak"
+  when: cleanst.stat.exists
 - name: Upload the image
   os_image:
     cloud: "{{ item.0.name }}"
