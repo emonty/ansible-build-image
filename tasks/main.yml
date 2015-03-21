@@ -1,0 +1,39 @@
+---
+- name: Make basename
+  set_fact:
+      imagename: "{{ distro }}-{{ release }}"
+- name: Build disk image
+  shell: disk-image-create -n -x --no-tmpfs -o {{ image_outdir}}/{{ imagename }} {{ distro }}-minimal vm process-config-drive {{ elements|default('') }}
+  args:
+    chdir: "{{ image_tmpdir }}"
+    creates: "{{ image_outdir}}/{{ imagename }}.qcow2"
+  environment:
+    ELEMENTS_PATH: "{{ elements_path|default(omit) }}"
+    QEMU_IMG_OPTIONS: "{{ qemu_image_options|default(omit) }}"
+    DIB_RELEASE: "{{ release }}"
+  register: image_create
+- command: qemu-img convert -O raw {{ image_outdir }}/{{ imagename }}.qcow2 {{ imagename }}.raw
+  when: image_create.changed
+  args:
+    chdir: "{{ image_tmpdir }}"
+    creates: "{{ image_tmpdir }}/{{ imagename }}.raw"
+- shell: docker run -v {{ image_tmpdir}}:/images emonty/vhd-util convert -s 0 -t 1 -i /images/{{ imagename }}.raw -o /images/{{ imagename }}-intermediate.vhd
+  when: image_create.changed
+  args:
+    creates: "{{ image_tmpdir}}/{{ imagename }}-intermediate.vhd"
+- shell: docker run -v {{ image_tmpdir }}:/images -v {{ image_ourdir }}:/output emonty/vhd-util convert -s 1 -t 2 -i /images/{{ imagename }}-intermediate.vhd -o /output/{{ imagename }}.vhd
+  when: image_create.changed
+  args:
+    creates: "{{ image_outdir }}/{{ imagename }}.vhd"
+- name: Upload the image
+  os_image:
+    cloud: "{{ item.0.name }}"
+    region: "{{ item.1 }}"
+    name: "{{ prefix }}-{{ imagename }}"
+    wait: yes
+    timeout: 3600
+    filename: "{{ image_outdir }}/{{ imagename }}.{{ item.0.format|default('qcow2') }}"
+    properties: "{{ item.0.properties|default(omit) }}"
+  with_subelements:
+  - clouds
+  - regions

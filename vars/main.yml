@@ -1,0 +1,23 @@
+---
+# vars file for infra/build-image
+distro: ubuntu
+release: trusty
+prefix: infra
+elements: infra
+elements_path: /opt/project-config/nodepool/elements
+image_outdir: /var/lib/dib-images
+image_tmpdir: /tmp
+qemu_image_options: compat=0.10
+clouds:
+- name: rackspace  # Names are expected to match cloud names in clouds.yaml
+  regions:
+  - dfw
+  - iad
+  - ord
+  format: vhd
+  properties:
+    vm_mode: hvm
+    xenapi_use_agent: false
+- name: hp
+  regions:
+  - region-b
