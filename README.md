@@ -9,6 +9,8 @@ Requirements
 diskimage-builder, and infra project-config repo, shade and a properly
 configured clouds.yaml file.
 
+You'll also need the vhd-util package from the ppa:mordred/infra PPA.
+
 Role Variables
 --------------
 
