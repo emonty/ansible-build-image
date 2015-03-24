@@ -20,11 +20,11 @@
   when: image_create.changed or not st.stat.exists
   args:
     creates: "{{ image_tmpdir }}/{{ imagename }}.raw"
-- shell: emonty/vhd-util convert -s 0 -t 1 -i {{ image_tmpdir }}/{{ imagename }}.raw -o {{ image_tmpdir}}/{{ imagename }}-intermediate.vhd
+- shell: vhd-util convert -s 0 -t 1 -i {{ image_tmpdir }}/{{ imagename }}.raw -o {{ image_tmpdir}}/{{ imagename }}-intermediate.vhd
   when: image_create.changed or not st.stat.exists
   args:
     creates: "{{ image_tmpdir}}/{{ imagename }}-intermediate.vhd"
-- shell: emonty/vhd-util convert -s 1 -t 2 -i {{ image_tmpdir}}/{{ imagename }}-intermediate.vhd -o {{ image_outdir }}/{{ imagename }}.vhd
+- shell: vhd-util convert -s 1 -t 2 -i {{ image_tmpdir}}/{{ imagename }}-intermediate.vhd -o {{ image_outdir }}/{{ imagename }}.vhd
   when: image_create.changed or not st.stat.exists
   args:
     creates: "{{ image_outdir }}/{{ imagename }}.vhd"
