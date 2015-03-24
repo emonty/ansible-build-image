@@ -3,7 +3,7 @@
   set_fact:
       imagename: "{{ distro }}-{{ release }}"
 - name: Build disk image
-shell: disk-image-create -n -x --no-tmpfs -o {{ image_outdir}}/{{ imagename }} {{ distro }}-minimal vm cloud-instance-simple-config {{ elements|default('') }}
+  shell: "disk-image-create -n -x --no-tmpfs -o {{ image_outdir}}/{{ imagename }} {{ distro }}-minimal vm cloud-instance-simple-config {{ elements|default('') }}"
   args:
     chdir: "{{ image_tmpdir }}"
     creates: "{{ image_outdir}}/{{ imagename }}.qcow2"
