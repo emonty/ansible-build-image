@@ -39,7 +39,7 @@
   os_image:
     cloud: "{{ item.0.name }}"
     region_name: "{{ item.1 }}"
-    name: "{{ prefix }}-{{ imagename }}"
+    name: "{{ prefix|default }}-{{ imagename }}"
     wait: yes
     timeout: 3600
     filename: "{{ image_outdir }}/{{ imagename }}.{{ item.0.format|default('qcow2') }}"

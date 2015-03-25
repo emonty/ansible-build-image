@@ -2,9 +2,8 @@
 # vars file for infra/build-image
 distro: ubuntu
 release: trusty
-prefix: infra
-elements: infra
 elements_path: /opt/project-config/nodepool/elements
+prefix: dib
 image_outdir: /var/lib/dib-images
 image_tmpdir: /tmp
 qemu_image_options: compat=0.10
