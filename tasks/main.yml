@@ -2,39 +2,21 @@
 - name: Make basename
   set_fact:
       imagename: "{{ distro }}-{{ release }}"
+- name: Look for image files
+  stat:
+    path: "{{ image_outdir }}/{{ imagename }}.{{ item }}"
+  register: st
+  with_items: "{{ clouds|map(attribute='format')|list() }}"
 - name: Build disk image
-  shell: "disk-image-create -n -x --no-tmpfs -t {{ clouds|map(attribute='format')|join(',') }} -o {{ image_outdir}}/{{ imagename }} {{ distro }}-minimal vm cloud-instance-simple-config {{ elements|default('') }}"
+  shell: "disk-image-create -n -x --no-tmpfs -t {{ clouds|map(attribute='format')|join(',') }} -o {{ image_outdir}}/{{ imagename }} {{ distro }}-minimal vm {{ elements|default('') }}"
   args:
     chdir: "{{ image_tmpdir }}"
-    creates: "{{ image_outdir}}/{{ imagename }}.qcow2"
   environment:
     ELEMENTS_PATH: "{{ elements_path|default(omit) }}"
     QEMU_IMG_OPTIONS: "{{ qemu_image_options|default(omit) }}"
     DIB_RELEASE: "{{ release }}"
   register: image_create
-- name: Look for VHD file
-  stat:
-    path: "{{ image_outdir }}/{{ imagename }}.vhd"
-  register: st
-- command: qemu-img convert -O raw {{ image_outdir }}/{{ imagename }}.qcow2 {{ image_tmpdir }}/{{ imagename }}.raw
-  when: image_create.changed or not st.stat.exists
-  args:
-    creates: "{{ image_tmpdir }}/{{ imagename }}.raw"
-- shell: vhd-util convert -s 0 -t 1 -i {{ image_tmpdir }}/{{ imagename }}.raw -o {{ image_tmpdir}}/{{ imagename }}-intermediate.vhd
-  when: image_create.changed or not st.stat.exists
-  args:
-    creates: "{{ image_tmpdir}}/{{ imagename }}-intermediate.vhd"
-- shell: vhd-util convert -s 1 -t 2 -i {{ image_tmpdir}}/{{ imagename }}-intermediate.vhd -o {{ image_outdir }}/{{ imagename }}.vhd
-  when: image_create.changed or not st.stat.exists
-  args:
-    creates: "{{ image_outdir }}/{{ imagename }}.vhd"
-- stat:
-    path: "{{ image_tmpdir}}/{{ imagename }}-intermediate.vhd.bak"
-  register: cleanst
-- file:
-    state: absent
-    path: "{{ image_tmpdir}}/{{ imagename }}-intermediate.vhd.bak"
-  when: cleanst.stat.exists
+  when: " {{ st.results|map(attribute='stat')|list()|selectattr('exists', 'sameas', false)|list()|length() > 0 }} "
 - name: Upload the image
   os_image:
     cloud: "{{ item.0.name }}"
@@ -42,7 +24,7 @@
     name: "{{ prefix|default }}-{{ imagename }}"
     wait: yes
     timeout: 3600
-    filename: "{{ image_outdir }}/{{ imagename }}.{{ item.0.format|default('qcow2') }}"
+    filename: "{{ image_outdir }}/{{ imagename }}.{{ item.0.format }}"
     properties: "{{ item.0.properties|default(omit) }}"
   with_subelements:
   - clouds
