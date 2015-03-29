@@ -24,6 +24,7 @@ image_outdir: Directory in which to place built images
 image_tmpdir: Directory to use for image conversions (should be large)
 # Looking in vars/main.yml is going to be the best way to grok this next one
 clouds: A list of dicts describing the clouds to upload the build image to.
+name, format and regions are required.
 ```
 
 Example Playbook
@@ -50,6 +51,7 @@ Example Playbook
          - name: hp
            regions:
            - region-b
+           format: qcow2
 
 License
 -------
