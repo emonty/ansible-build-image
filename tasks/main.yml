@@ -26,6 +26,8 @@
     timeout: 3600
     filename: "{{ image_outdir }}/{{ imagename }}.{{ item.0.format }}"
     properties: "{{ item.0.properties|default(omit) }}"
+    container_format: "{{ item.0.container_format|default(omit) }}"
+    disk_format: "{{ item.0.format }}"
   with_subelements:
   - clouds
   - regions
