@@ -17,6 +17,16 @@
     DIB_RELEASE: "{{ release }}"
   register: image_create
   when: " {{ st.results|map(attribute='stat')|list()|selectattr('exists', 'sameas', false)|list()|length() > 0 }} "
+- name: Delete old image
+  os_image:
+    cloud: "{{ item.0.name }}"
+    region_name: "{{ item.1 }}"
+    name: "{{ prefix|default }}-{{ imagename }}"
+    wait: yes
+    state: absent
+  with_subelements:
+  - clouds
+  - regions
 - name: Upload the image
   os_image:
     cloud: "{{ item.0.name }}"
@@ -31,3 +41,36 @@
   with_subelements:
   - clouds
   - regions
+- os_keypair:
+    cloud: "{{ item.0.name }}"
+    region_name: "{{ item.1 }}"
+    name: "{{ launch_keypair|default(launch_node) }}"
+    public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+  with_subelements:
+  - clouds
+  - regions
+- os_server:
+    cloud: "{{ item.0.name }}"
+    region_name: "{{ item.1 }}"
+    name: "{{ prefix|default }}-{{ imagename }}"
+    state: absent
+  with_subelements:
+  - clouds
+  - regions
+- os_server:
+    cloud: "{{ item.0.name }}"
+    region_name: "{{ item.1 }}"
+    image: "{{ prefix|default }}-{{ imagename }}"
+    flavor_ram: 1
+    config_drive: yes
+    name: "{{ prefix|default }}-{{ imagename }}"
+    key_name: "{{ launch_keypair|default(launch_node) }}"
+  register: servers
+  with_subelements:
+  - clouds
+  - regions
+- wait_for:
+    port: 22
+    timeout: 300
+    host: "{{ item.openstack['interface_ip'] }}"
+  with_items: servers.results
